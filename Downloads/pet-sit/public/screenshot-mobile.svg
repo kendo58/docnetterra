@@ -1,0 +1,89 @@
+<svg width="640" height="1136" viewBox="0 0 640 1136" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="640" y2="1136" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" />
+      <stop offset="1" stop-color="#FFF1F2" />
+    </linearGradient>
+    <linearGradient id="mark" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#E31C5F" />
+      <stop offset="1" stop-color="#FF385C" />
+    </linearGradient>
+  </defs>
+
+  <rect width="640" height="1136" fill="url(#bg)" />
+  <circle cx="520" cy="160" r="220" fill="#E31C5F" opacity="0.12" />
+  <circle cx="120" cy="980" r="220" fill="#FF385C" opacity="0.08" />
+
+  <g transform="translate(64 140)">
+    <rect width="512" height="856" rx="44" fill="#FFFFFF" />
+    <rect x="0" y="0" width="512" height="92" rx="44" fill="#0F172A" opacity="0.03" />
+
+    <g transform="translate(44 28)">
+      <rect width="56" height="56" rx="14" fill="url(#mark)" />
+      <g transform="translate(14 14) scale(1.2)">
+        <path
+          d="M4 10.5L12 4l8 6.5V20a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V10.5Z"
+          stroke="#FFFFFF"
+          stroke-width="2.2"
+          stroke-linejoin="round"
+        />
+        <circle cx="9" cy="13" r="1.25" fill="#FFFFFF" />
+        <circle cx="11" cy="11.8" r="1.25" fill="#FFFFFF" />
+        <circle cx="13" cy="11.8" r="1.25" fill="#FFFFFF" />
+        <circle cx="15" cy="13" r="1.25" fill="#FFFFFF" />
+        <path
+          d="M12 14.5c-2.2 0-4 1.4-4 3.2 0 1.4 1.4 2.4 4 2.4s4-1 4-2.4c0-1.8-1.8-3.2-4-3.2Z"
+          fill="#FFFFFF"
+        />
+      </g>
+      <text
+        x="72"
+        y="40"
+        font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial"
+        font-size="34"
+        font-weight="800"
+        fill="#0F172A"
+        letter-spacing="-0.8"
+      >
+        SitSwap
+      </text>
+    </g>
+
+    <g transform="translate(44 170)">
+      <text
+        x="0"
+        y="56"
+        font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial"
+        font-size="44"
+        font-weight="800"
+        fill="#0F172A"
+        letter-spacing="-1.1"
+      >
+        Free stays for care
+      </text>
+      <text
+        x="0"
+        y="98"
+        font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial"
+        font-size="20"
+        font-weight="500"
+        fill="#475569"
+      >
+        Pet sitting and agreed household chores.
+      </text>
+
+      <rect x="0" y="136" width="280" height="56" rx="16" fill="url(#mark)" />
+      <text
+        x="28"
+        y="173"
+        font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial"
+        font-size="20"
+        font-weight="800"
+        fill="#FFFFFF"
+      >
+        Get started
+      </text>
+    </g>
+  </g>
+</svg>
+

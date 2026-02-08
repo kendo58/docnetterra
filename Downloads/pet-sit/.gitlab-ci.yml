@@ -1,0 +1,46 @@
+image: node:20-bookworm
+
+stages:
+  - test
+
+variables:
+  NODE_ENV: "test"
+  NEXT_TELEMETRY_DISABLED: "1"
+  NPM_CONFIG_CACHE: "$CI_PROJECT_DIR/.npm"
+  PLAYWRIGHT_PORT: "3100"
+
+  # Minimal placeholders so `next build` + env validation succeed in CI.
+  NEXT_PUBLIC_APP_URL: "http://localhost:3100"
+  NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co"
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: "example"
+  SUPABASE_SERVICE_ROLE_KEY: "example"
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_example"
+  STRIPE_SECRET_KEY: "sk_test_example"
+
+cache:
+  key:
+    files:
+      - package-lock.json
+  paths:
+    - .npm/
+    - .next/cache/
+
+ci:
+  stage: test
+  script:
+    - npm ci
+    - npx playwright install --with-deps chromium
+    - npm run lint
+    - npm run test:typecheck
+    - npm run test:coverage
+    - npm run test:scripts
+    - npm run build
+    - npm run test:e2e
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths:
+      - coverage/
+      - playwright-report/
+      - test-results/
+

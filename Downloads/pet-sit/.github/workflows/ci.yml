@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  check-ci:
+    name: Check CI
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: example
+      SUPABASE_SERVICE_ROLE_KEY: example
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_example
+      STRIPE_SECRET_KEY: sk_test_example
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run check:ci
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report
+
+  e2e-critical:
+    name: Critical E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: check-ci
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+    env:
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL || secrets.SUPABASE_TEST_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY || secrets.SUPABASE_TEST_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY || secrets.SUPABASE_TEST_SERVICE_ROLE_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      E2E_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL || secrets.SUPABASE_TEST_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      E2E_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY || secrets.SUPABASE_TEST_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY || secrets.SUPABASE_TEST_SERVICE_ROLE_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+      E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+      E2E_HOMEOWNER_EMAIL: ${{ secrets.E2E_HOMEOWNER_EMAIL }}
+      E2E_HOMEOWNER_PASSWORD: ${{ secrets.E2E_HOMEOWNER_PASSWORD }}
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_example
+      STRIPE_SECRET_KEY: sk_test_example
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e:critical
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-critical
+          path: playwright-report
+
+  db-integration:
+    name: Database Integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: check-ci
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+    env:
+      SUPABASE_TEST_URL: ${{ secrets.SUPABASE_TEST_URL || secrets.E2E_SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_TEST_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_TEST_SERVICE_ROLE_KEY || secrets.E2E_SUPABASE_SERVICE_ROLE_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL || secrets.SUPABASE_TEST_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY || secrets.SUPABASE_TEST_SERVICE_ROLE_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run test:scripts:db:required

@@ -1,0 +1,12 @@
+node_modules
+.next
+coverage
+playwright-report
+test-results
+.github
+.git
+.DS_Store
+.env*
+!.env.example
+npm-debug.log*
+

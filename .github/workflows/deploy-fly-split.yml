@@ -1,0 +1,185 @@
+name: Deploy Fly Split
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/deploy-fly-split.yml"
+      - "Downloads/pet-sit/Dockerfile"
+      - "Downloads/pet-sit/Dockerfile.admin"
+      - "Downloads/pet-sit/deploy/fly/**"
+      - "Downloads/pet-sit/apps/admin/**"
+      - "Downloads/pet-sit/app/**"
+      - "Downloads/pet-sit/components/**"
+      - "Downloads/pet-sit/lib/**"
+      - "Downloads/pet-sit/scripts/**"
+      - "Downloads/pet-sit/package.json"
+      - "Downloads/pet-sit/package-lock.json"
+      - "Downloads/pet-sit/next.config.mjs"
+      - "Downloads/pet-sit/apps/admin/next.config.mjs"
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Deployment target"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - staging
+          - production
+      run_smoke_checks:
+        description: "Run post-deploy smoke checks"
+        required: true
+        default: true
+        type: boolean
+
+jobs:
+  deploy-staging:
+    name: Deploy Staging
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.target == 'staging')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    concurrency: deploy-staging
+    environment: staging
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      FLY_WEB_APP: ${{ vars.FLY_WEB_APP }}
+      FLY_ADMIN_APP: ${{ vars.FLY_ADMIN_APP }}
+      WEB_APP_URL: ${{ vars.WEB_APP_URL }}
+      ADMIN_APP_URL: ${{ vars.ADMIN_APP_URL }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    defaults:
+      run:
+        working-directory: Downloads/pet-sit
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Validate Required Deploy Variables
+        run: |
+          set -euo pipefail
+          required_vars=(
+            FLY_API_TOKEN
+            FLY_WEB_APP
+            FLY_ADMIN_APP
+            WEB_APP_URL
+            ADMIN_APP_URL
+            NEXT_PUBLIC_SUPABASE_URL
+            SUPABASE_SERVICE_ROLE_KEY
+          )
+          for key in "${required_vars[@]}"; do
+            if [ -z "${!key:-}" ]; then
+              echo "::error::Missing required variable or secret: $key"
+              exit 1
+            fi
+          done
+      - name: Deploy Admin App
+        run: |
+          flyctl deploy \
+            --config deploy/fly/admin.toml \
+            --dockerfile Dockerfile.admin \
+            --app "$FLY_ADMIN_APP" \
+            --remote-only
+      - name: Wire Admin Origin on Web App
+        run: |
+          flyctl secrets set \
+            --app "$FLY_WEB_APP" \
+            NEXT_PUBLIC_ADMIN_APP_URL="$ADMIN_APP_URL" \
+            ADMIN_APP_URL="$ADMIN_APP_URL"
+      - name: Deploy Web App
+        run: |
+          flyctl deploy \
+            --config deploy/fly/web.toml \
+            --dockerfile Dockerfile \
+            --app "$FLY_WEB_APP" \
+            --remote-only
+      - name: Verify Split Deploy Routing
+        run: npm run verify:split-deploy
+        env:
+          SITSWAP_WEB_APP_URL: ${{ env.WEB_APP_URL }}
+          SITSWAP_ADMIN_APP_URL: ${{ env.ADMIN_APP_URL }}
+      - name: Run Post-Deploy Smoke Checks
+        if: github.event_name != 'workflow_dispatch' || inputs.run_smoke_checks == true
+        run: npm run smoke:migrations
+        env:
+          SITSWAP_APP_HEALTH_URL: ${{ env.WEB_APP_URL }}
+
+  deploy-production:
+    name: Deploy Production
+    if: github.event_name == 'workflow_dispatch' && inputs.target == 'production'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    concurrency: deploy-production
+    environment: production
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      FLY_WEB_APP: ${{ vars.FLY_WEB_APP }}
+      FLY_ADMIN_APP: ${{ vars.FLY_ADMIN_APP }}
+      WEB_APP_URL: ${{ vars.WEB_APP_URL }}
+      ADMIN_APP_URL: ${{ vars.ADMIN_APP_URL }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    defaults:
+      run:
+        working-directory: Downloads/pet-sit
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Validate Required Deploy Variables
+        run: |
+          set -euo pipefail
+          required_vars=(
+            FLY_API_TOKEN
+            FLY_WEB_APP
+            FLY_ADMIN_APP
+            WEB_APP_URL
+            ADMIN_APP_URL
+            NEXT_PUBLIC_SUPABASE_URL
+            SUPABASE_SERVICE_ROLE_KEY
+          )
+          for key in "${required_vars[@]}"; do
+            if [ -z "${!key:-}" ]; then
+              echo "::error::Missing required variable or secret: $key"
+              exit 1
+            fi
+          done
+      - name: Deploy Admin App
+        run: |
+          flyctl deploy \
+            --config deploy/fly/admin.toml \
+            --dockerfile Dockerfile.admin \
+            --app "$FLY_ADMIN_APP" \
+            --remote-only
+      - name: Wire Admin Origin on Web App
+        run: |
+          flyctl secrets set \
+            --app "$FLY_WEB_APP" \
+            NEXT_PUBLIC_ADMIN_APP_URL="$ADMIN_APP_URL" \
+            ADMIN_APP_URL="$ADMIN_APP_URL"
+      - name: Deploy Web App
+        run: |
+          flyctl deploy \
+            --config deploy/fly/web.toml \
+            --dockerfile Dockerfile \
+            --app "$FLY_WEB_APP" \
+            --remote-only
+      - name: Verify Split Deploy Routing
+        run: npm run verify:split-deploy
+        env:
+          SITSWAP_WEB_APP_URL: ${{ env.WEB_APP_URL }}
+          SITSWAP_ADMIN_APP_URL: ${{ env.ADMIN_APP_URL }}
+      - name: Run Post-Deploy Smoke Checks
+        if: inputs.run_smoke_checks == true
+        run: npm run smoke:migrations
+        env:
+          SITSWAP_APP_HEALTH_URL: ${{ env.WEB_APP_URL }}
