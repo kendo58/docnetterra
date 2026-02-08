@@ -5,18 +5,18 @@ on:
     branches: ["main"]
     paths:
       - ".github/workflows/deploy-fly-split.yml"
-      - "Dockerfile"
-      - "Dockerfile.admin"
-      - "deploy/fly/**"
-      - "apps/admin/**"
-      - "app/**"
-      - "components/**"
-      - "lib/**"
-      - "scripts/**"
-      - "package.json"
-      - "package-lock.json"
-      - "next.config.mjs"
-      - "apps/admin/next.config.mjs"
+      - "Downloads/pet-sit/Dockerfile"
+      - "Downloads/pet-sit/Dockerfile.admin"
+      - "Downloads/pet-sit/deploy/fly/**"
+      - "Downloads/pet-sit/apps/admin/**"
+      - "Downloads/pet-sit/app/**"
+      - "Downloads/pet-sit/components/**"
+      - "Downloads/pet-sit/lib/**"
+      - "Downloads/pet-sit/scripts/**"
+      - "Downloads/pet-sit/package.json"
+      - "Downloads/pet-sit/package-lock.json"
+      - "Downloads/pet-sit/next.config.mjs"
+      - "Downloads/pet-sit/apps/admin/next.config.mjs"
   workflow_dispatch:
     inputs:
       target:
@@ -48,7 +48,11 @@ jobs:
       WEB_APP_URL: ${{ vars.WEB_APP_URL }}
       ADMIN_APP_URL: ${{ vars.ADMIN_APP_URL }}
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    defaults:
+      run:
+        working-directory: Downloads/pet-sit
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -68,6 +72,7 @@ jobs:
             WEB_APP_URL
             ADMIN_APP_URL
             NEXT_PUBLIC_SUPABASE_URL
+            NEXT_PUBLIC_SUPABASE_ANON_KEY
             SUPABASE_SERVICE_ROLE_KEY
           )
           for key in "${required_vars[@]}"; do
@@ -76,17 +81,32 @@ jobs:
               exit 1
             fi
           done
+      - name: Set Runtime Secrets (Admin)
+        run: |
+          flyctl secrets set \
+            --app "$FLY_ADMIN_APP" \
+            NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
+            NEXT_PUBLIC_SUPABASE_ANON_KEY="$NEXT_PUBLIC_SUPABASE_ANON_KEY" \
+            SUPABASE_SERVICE_ROLE_KEY="$SUPABASE_SERVICE_ROLE_KEY" \
+            NEXT_PUBLIC_APP_URL="$ADMIN_APP_URL"
       - name: Deploy Admin App
         run: |
           flyctl deploy \
             --config deploy/fly/admin.toml \
             --dockerfile Dockerfile.admin \
             --app "$FLY_ADMIN_APP" \
+            --build-arg NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
+            --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="$NEXT_PUBLIC_SUPABASE_ANON_KEY" \
+            --build-arg NEXT_PUBLIC_APP_URL="$ADMIN_APP_URL" \
             --remote-only
-      - name: Wire Admin Origin on Web App
+      - name: Set Runtime Secrets (Web)
         run: |
           flyctl secrets set \
             --app "$FLY_WEB_APP" \
+            NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
+            NEXT_PUBLIC_SUPABASE_ANON_KEY="$NEXT_PUBLIC_SUPABASE_ANON_KEY" \
+            SUPABASE_SERVICE_ROLE_KEY="$SUPABASE_SERVICE_ROLE_KEY" \
+            NEXT_PUBLIC_APP_URL="$WEB_APP_URL" \
             NEXT_PUBLIC_ADMIN_APP_URL="$ADMIN_APP_URL" \
             ADMIN_APP_URL="$ADMIN_APP_URL"
       - name: Deploy Web App
@@ -95,6 +115,10 @@ jobs:
             --config deploy/fly/web.toml \
             --dockerfile Dockerfile \
             --app "$FLY_WEB_APP" \
+            --build-arg NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
+            --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="$NEXT_PUBLIC_SUPABASE_ANON_KEY" \
+            --build-arg NEXT_PUBLIC_APP_URL="$WEB_APP_URL" \
+            --build-arg NEXT_PUBLIC_ADMIN_APP_URL="$ADMIN_APP_URL" \
             --remote-only
       - name: Verify Split Deploy Routing
         run: npm run verify:split-deploy
@@ -121,7 +145,11 @@ jobs:
       WEB_APP_URL: ${{ vars.WEB_APP_URL }}
       ADMIN_APP_URL: ${{ vars.ADMIN_APP_URL }}
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    defaults:
+      run:
+        working-directory: Downloads/pet-sit
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -141,6 +169,7 @@ jobs:
             WEB_APP_URL
             ADMIN_APP_URL
             NEXT_PUBLIC_SUPABASE_URL
+            NEXT_PUBLIC_SUPABASE_ANON_KEY
             SUPABASE_SERVICE_ROLE_KEY
           )
           for key in "${required_vars[@]}"; do
@@ -149,17 +178,32 @@ jobs:
               exit 1
             fi
           done
+      - name: Set Runtime Secrets (Admin)
+        run: |
+          flyctl secrets set \
+            --app "$FLY_ADMIN_APP" \
+            NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
+            NEXT_PUBLIC_SUPABASE_ANON_KEY="$NEXT_PUBLIC_SUPABASE_ANON_KEY" \
+            SUPABASE_SERVICE_ROLE_KEY="$SUPABASE_SERVICE_ROLE_KEY" \
+            NEXT_PUBLIC_APP_URL="$ADMIN_APP_URL"
       - name: Deploy Admin App
         run: |
           flyctl deploy \
             --config deploy/fly/admin.toml \
             --dockerfile Dockerfile.admin \
             --app "$FLY_ADMIN_APP" \
+            --build-arg NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
+            --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="$NEXT_PUBLIC_SUPABASE_ANON_KEY" \
+            --build-arg NEXT_PUBLIC_APP_URL="$ADMIN_APP_URL" \
             --remote-only
-      - name: Wire Admin Origin on Web App
+      - name: Set Runtime Secrets (Web)
         run: |
           flyctl secrets set \
             --app "$FLY_WEB_APP" \
+            NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
+            NEXT_PUBLIC_SUPABASE_ANON_KEY="$NEXT_PUBLIC_SUPABASE_ANON_KEY" \
+            SUPABASE_SERVICE_ROLE_KEY="$SUPABASE_SERVICE_ROLE_KEY" \
+            NEXT_PUBLIC_APP_URL="$WEB_APP_URL" \
             NEXT_PUBLIC_ADMIN_APP_URL="$ADMIN_APP_URL" \
             ADMIN_APP_URL="$ADMIN_APP_URL"
       - name: Deploy Web App
@@ -168,6 +212,10 @@ jobs:
             --config deploy/fly/web.toml \
             --dockerfile Dockerfile \
             --app "$FLY_WEB_APP" \
+            --build-arg NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
+            --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="$NEXT_PUBLIC_SUPABASE_ANON_KEY" \
+            --build-arg NEXT_PUBLIC_APP_URL="$WEB_APP_URL" \
+            --build-arg NEXT_PUBLIC_ADMIN_APP_URL="$ADMIN_APP_URL" \
             --remote-only
       - name: Verify Split Deploy Routing
         run: npm run verify:split-deploy

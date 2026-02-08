@@ -34,11 +34,13 @@ For each environment configure:
 
 - `FLY_API_TOKEN`
 - `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 
 Notes:
 
 - The workflow uses `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` for post-deploy smoke checks.
+- The workflow passes `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` as build args so client bundles have correct Supabase config (Docker builds do not read `.env.local`).
 - App runtime secrets (Stripe, Supabase anon key, etc.) should be set on each Fly app via `fly secrets set`.
 
 ## Deployment Order (per environment)
