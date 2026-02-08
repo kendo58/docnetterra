@@ -30,6 +30,16 @@
 6. Added operator docs for pipeline setup and env/secrets:
    - `docs/FLY_SPLIT_DEPLOY_PIPELINE.md`
    - updates in `README.md`, `SETUP.md`, `docs/ADMIN_SPLIT_DEPLOY.md`, `docs/RELEASE_TRAIN.md`, `dev-plan.md`
+7. Populated GitHub environments for split deploy automation:
+   - created `staging` and `production` environments
+   - set vars: `FLY_WEB_APP`, `FLY_ADMIN_APP`, `WEB_APP_URL`, `ADMIN_APP_URL`
+   - set secrets: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+8. Triggered `.github/workflows/deploy-fly-split.yml` staging deploy and iterated on failures:
+   - fixed `actions/setup-node` path issue by updating workflow `node-version-file` and npm cache dependency path
+   - confirmed deployment is now blocked only on missing `FLY_API_TOKEN` secret.
+9. Hardened workflow correctness for Docker-based Next builds:
+   - passes Supabase public env as `flyctl deploy --build-arg` so client bundles are configured correctly
+   - sets required runtime secrets on both Fly apps via `flyctl secrets set` prior to deploy.
 
 ### Verification Results
 
@@ -45,9 +55,10 @@
 
 ### Remaining External Steps
 
-- Populate GitHub environment vars/secrets for `staging` and `production` as documented in `docs/FLY_SPLIT_DEPLOY_PIPELINE.md`.
+- Set `FLY_API_TOKEN` secret for `staging` and `production` GitHub environments.
 - Trigger `.github/workflows/deploy-fly-split.yml` for `staging` then `production`.
-- Confirm production domain cutover by checking web `/admin` redirect and admin login on live origin.
+- Confirm cutover:
+  - run `npm run verify:split-deploy` against deployed `WEB_APP_URL` and `ADMIN_APP_URL`.
 
 ---
 
