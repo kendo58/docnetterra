@@ -56,8 +56,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version-file: .nvmrc
+          node-version-file: Downloads/pet-sit/.nvmrc
           cache: npm
+          cache-dependency-path: Downloads/pet-sit/package-lock.json
       - run: npm ci
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - name: Validate Required Deploy Variables
@@ -131,8 +132,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version-file: .nvmrc
+          node-version-file: Downloads/pet-sit/.nvmrc
           cache: npm
+          cache-dependency-path: Downloads/pet-sit/package-lock.json
       - run: npm ci
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - name: Validate Required Deploy Variables
